@@ -37,7 +37,7 @@ class TestMachineExecution:
 
     def test_simple_execution(self):
         """Test simple machine execution."""
-        progtext = "_ a\n0 ,R,! ,L,"
+        progtext = "_ a\n0 ,R,! ,L,!"
         machine = Machine(progtext, tape="a")
         states = []
         for state, symbol in machine:
@@ -47,7 +47,7 @@ class TestMachineExecution:
 
     def test_multiple_steps(self):
         """Test execution with multiple steps."""
-        progtext = "_ a\n0 ,R,0 ,R,!\n1 ,L,! ,,"
+        progtext = "_ a\n0 ,R,0 ,R,!\n1 ,L,! ,R,!"
         machine = Machine(progtext, tape="aa")
         steps = 0
         for state, symbol in machine:
@@ -56,7 +56,7 @@ class TestMachineExecution:
 
     def test_tape_modification(self):
         """Test that tape is modified during execution."""
-        progtext = "_ a\n0 b,R,! ,,"
+        progtext = "_ a\n0 b,R,! ,L,!"
         machine = Machine(progtext, tape="a")
         for _ in machine:
             pass
@@ -121,7 +121,7 @@ class TestMachineValidation:
 
     def test_machine_bool_valid_output(self):
         """Test machine validation with valid output."""
-        progtext = "_ a\n0 b,R,! ,,"
+        progtext = "_ a\n0 b,R,! ,L,!"
         machine = Machine(progtext, tape="a")
         for _ in machine:
             pass
@@ -129,7 +129,7 @@ class TestMachineValidation:
 
     def test_machine_bool_null_in_output(self):
         """Test machine validation fails with null in output."""
-        progtext = "_ a\n0 _,R,! ,,"
+        progtext = "_ a\n0 _,R,! ,L,!"
         machine = Machine(progtext, tape="a")
         for _ in machine:
             pass
@@ -137,8 +137,8 @@ class TestMachineValidation:
 
     def test_execution_limit_exceeded(self):
         """Test that execution limit is enforced."""
-        # Infinite loop program
-        progtext = "_ a\n0 ,R,0 ,,"
+        # Infinite loop program - stays in state 0, moves right forever
+        progtext = "_ a\n0 ,R,0 ,R,0"
         machine = Machine(progtext, tape="a", limit=10)
         with pytest.raises(RuntimeError, match="Limit of 10 steps is reached"):
             for _ in machine:
@@ -146,8 +146,16 @@ class TestMachineValidation:
 
     def test_invalid_move_direction(self):
         """Test error on invalid move direction."""
-        progtext = "_ a\n0 ,X,! ,,"
+        progtext = "_ a\n0 ,X,! ,L,!"
         machine = Machine(progtext, tape="a")
+        with pytest.raises(RuntimeError, match="Incorrect rule"):
+            for _ in machine:
+                pass
+
+    def test_unreachable_rule_triggers_error(self):
+        """Test that ,, unreachable rule triggers RuntimeError if reached."""
+        progtext = "_ a\n0 ,R,! ,,"
+        machine = Machine(progtext, tape="aa")
         with pytest.raises(RuntimeError, match="Incorrect rule"):
             for _ in machine:
                 pass
@@ -158,7 +166,7 @@ class TestMachineIteration:
 
     def test_iteration_yields_state_symbol(self):
         """Test that iteration yields (state, symbol) tuples."""
-        progtext = "_ a\n0 ,R,! ,,"
+        progtext = "_ a\n0 ,R,! ,L,!"
         machine = Machine(progtext, tape="a")
         for state, symbol in machine:
             assert isinstance(state, str)
@@ -166,7 +174,7 @@ class TestMachineIteration:
 
     def test_stops_at_stop_state(self):
         """Test that iteration stops at stop state."""
-        progtext = "_ a\n0 ,R,1 ,R,\n1 ,R,! ,,"
+        progtext = "_ a\n0 ,R,1 ,R,!\n1 ,R,! ,L,!"
         machine = Machine(progtext, tape="aa")
         final_state = None
         for state, symbol in machine:
@@ -175,7 +183,7 @@ class TestMachineIteration:
 
     def test_state_progression(self):
         """Test state changes during execution."""
-        progtext = "_ a\n0 ,R,1 ,R,\n1 ,R,2 ,R,\n2 ,R,! ,,"
+        progtext = "_ a\n0 ,R,1 ,R,!\n1 ,R,2 ,R,!\n2 ,R,! ,L,!"
         machine = Machine(progtext, tape="aaa")
         states_seen = set()
         for state, symbol in machine:
