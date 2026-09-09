@@ -60,6 +60,7 @@ class Prog(UserDict):
     null: str = "_"
 
     def __init__(self, progtext, null="_", sep=","):
+        super().__init__()
         self.null, self.sep = null, sep
         self.parse(progtext)
 
@@ -77,8 +78,18 @@ class Prog(UserDict):
             for symbol, textrule in zip(self.alphabet, rules):
                 self[state, symbol] = textrule.split(self.sep)
 
+    @property
     def states(self):
-        return [key for key, seq in groupby(self.keys())]
+        return [key for key, seq in groupby(k for k, _ in self.keys())]
+
+    def __str__(self):
+        sw = max(len(str(s)) for s in self.states)
+        rw = sw + 2 * len(self.sep) + 2 + sw
+        result = " " * (sw + 1) + " ".join(f"{a:^{rw}}" for a in self.alphabet)
+        for state in self.states:
+            rules = [self[state, a] for a in self.alphabet]
+            result += f"\n{state:<{sw}} " + " ".join(f"{a + self.sep + m + self.sep + s:^{rw}}" for a, m, s in rules)
+        return result
 
 class Machine:
     prog: Prog = None
