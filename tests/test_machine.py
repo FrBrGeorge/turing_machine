@@ -37,7 +37,7 @@ class TestMachineExecution:
 
     def test_simple_execution(self):
         """Test simple machine execution."""
-        progtext = "_ a\n0 ,R,!"
+        progtext = "_ a\n0 ,R,! ,L,"
         machine = Machine(progtext, tape="a")
         states = []
         for state, symbol in machine:

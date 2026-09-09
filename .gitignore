@@ -3,3 +3,5 @@ dist
 build
 *.swp
 *.egg-info
+.coverage
+coverage.xml
