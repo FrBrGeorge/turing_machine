@@ -5,15 +5,17 @@ Turing Machine, try 4.
 from collections import UserDict
 from itertools import groupby
 
-class Band:
-    """MT band."""
+RUNLIMIT = 32768
+
+class Tape:
+    """MT tape."""
 
     def __init__(self, content="", null="_"):
         self.content, self.null = content, null
         self.current = 0
 
     def __getitem__(self, idx):
-        return self[idx] if 0 <= idx < len(self) else self.null
+        return self.content[idx] if 0 <= idx < len(self) else self.null
 
     def __invert__(self):
         return self[self.current]
@@ -33,22 +35,23 @@ class Band:
         if 0 <= self.current < len(self):
             self.content = self.content[:self.current] + value + self.content[self.current + 1:]
         elif self.current < 0:
-            self.content = value + (self.current + 1) * self.null + self.content
-        else:
+            if value != self.null:
+                self.content = value + (self.current + 1) * self.null + self.content
+        elif value != self.null:
             self.content += (self.current - len(self)) * self.null + value
         self._normalize()
+        return self
 
     def _normalize(self):
-        while self.content.startswith(self.null):
-            self.content = self.content[1:]
-            self.current -= 1
-        while self.content.endswith(self.null):
-            self.content = self.content[:-1]
+        lcontent = self.content.lstrip(self.null)
+        self.current -= len(self) - len(lcontent)
+        self.content = self.content.strip(self.null)
 
     def __str__(self):
         return "".join(self[i] for i in range(min(self.current, 0), max(self.current + 1, len(self))))
 
-    def underline(self):
+    @property
+    def mark(self):
         return "".join("^" if i == self.current else " " for i in range(min(self.current, 0), self.current + 1))
 
 
@@ -83,6 +86,7 @@ class Prog(UserDict):
         return [key for key, seq in groupby(k for k, _ in self.keys())]
 
     def __str__(self):
+        # TODO mark current state / symbol
         sw = max(len(str(s)) for s in self.states)
         rw = sw + 2 * len(self.sep) + 2 + sw
         result = " " * (sw + 1) + " ".join(f"{a:^{rw}}" for a in self.alphabet)
@@ -92,11 +96,32 @@ class Prog(UserDict):
         return result
 
 class Machine:
-    prog: Prog = None
-    band: Band = Band()
+    prog: prog = None
+    tape: tape = Tape()
     state: str = "0"
+    limit: int = RUNLIMIT
 
-    def __init__(self, progtext, band=Band(), null="_", sep=","):
-        self.band = Band(band, null)
-        self.Prog = Prog(progtext, null, sep)
-        self.state = 0
+    def __init__(self, progtext, tape=Tape(), limit=RUNLIMIT, stop="!", null="_", sep=","):
+        self.tape = Tape(tape, null)
+        self.prog = Prog(progtext, null, sep)
+        self.state, self.stop, self.limit = "0", stop, limit
+
+    def __iter__(self):
+        for i in range(self.limit):
+            yield self.state, ~self.tape
+            if self.state == self.stop:
+                break
+            symbol, move, state = self.prog[self.state, ~self.tape]
+            if move not in "RLN":
+                raise RuntimeError(f"Incorrect rule: {self.prog[self.state, ~self.tape]} at {self.state}:{~self.tape}")
+            symbol = symbol or ~self.tape
+            state = state or self.state
+            self.tape @= symbol
+            (move == "L" and -self.tape) or (move == "R" and +self.tape)
+            self.state = state
+        else:
+            raise RuntimeError(f"Limit of {self.limit} steps is reached, still running")
+
+    def __bool__(self):
+        """If MT is correct?"""
+        return self.tape.null not in self.tape.content and ~self.tape != self.tape.null
