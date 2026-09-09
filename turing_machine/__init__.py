@@ -69,7 +69,7 @@ class Prog(UserDict):
 
     def parse(self, progtext):
         # TODO AL compatibility mode
-        table = [line.strip().split() for line in progtext.split("\n")]
+        table = [line.strip().split() for line in progtext.split("\n") if not line.startswith("#")]
         self.alphabet = table[0]
         if any(len(a) != 1 for a in self.alphabet):
             raise ValueError(f"Incorrect symbol length in {table[0]}")
