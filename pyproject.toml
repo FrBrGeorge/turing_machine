@@ -31,3 +31,14 @@ turing-machine = "turing_machine.__main__:main"
 
 [tool.setuptools.package-dir]
 turing_machine = "turing_machine"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "flake8>=5.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=turing_machine --cov-report=xml --cov-report=term-missing"
