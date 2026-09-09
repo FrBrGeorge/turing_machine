@@ -36,8 +36,6 @@ def run(*args):
                 match cmd:
                     case "?":
                         print(mt.prog)
-    if not mt:
-        raise SyntaxError(f"Incorrect final word: {mt.tape}")
     return str(mt.tape)
 
 def main():

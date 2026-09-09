@@ -96,8 +96,8 @@ class Prog(UserDict):
         return result
 
 class Machine:
-    prog: prog = None
-    tape: tape = Tape()
+    prog: Prog = None
+    tape: Tape = Tape()
     state: str = "0"
     limit: int = RUNLIMIT
 
@@ -121,6 +121,8 @@ class Machine:
             self.state = state
         else:
             raise RuntimeError(f"Limit of {self.limit} steps is reached, still running")
+        if not self:
+            raise SyntaxError(f"Incorrect final word: {self.tape}")
 
     def __bool__(self):
         """If MT is correct?"""
