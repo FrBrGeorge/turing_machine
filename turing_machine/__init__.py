@@ -112,7 +112,7 @@ class Machine:
             if self.state == self.stop:
                 break
             symbol, move, state = self.prog[self.state, ~self.tape]
-            if move not in "RLN":
+            if move not in set("LRN"):
                 raise RuntimeError(f"Incorrect rule: {self.prog[self.state, ~self.tape]} at {self.state}:{~self.tape}")
             symbol = symbol or ~self.tape
             state = state or self.state
