@@ -24,8 +24,8 @@ class TestProgParsing:
         # This is a comment
         _ a b
         # Another comment
-        0 ,R, ,L,
-        1 a,N,!
+        0 ,R, ,L, ,,
+        1 a,N,! ,, ,,
         """
         prog = Prog(progtext)
         assert prog.alphabet == ["_", "a", "b"]
@@ -64,14 +64,14 @@ class TestProgRules:
         rule1 = prog["0", "a"]
         assert rule1 == ["y", "L", "2"]
 
-    def test_empty_rules_padding(self):
-        """Test that rules are padded with empty rules."""
-        progtext = "_ a\n0 ,R,"
+    def test_unreachable_rule_with_empty_marker(self):
+        """Test that ,, marks unreachable rules."""
+        progtext = "_ a b\n0 ,R, ,L, ,,"
         prog = Prog(progtext)
-        # Rule for first symbol
+        # Rules should exist for all alphabet symbols
         assert prog["0", "_"] == ["", "R", ""]
-        # Should have rule for second symbol too (padded)
-        assert len(prog["0", "a"]) == 3
+        assert prog["0", "a"] == ["", "L", ""]
+        # The third symbol has empty rule marker
 
 
 class TestProgStates:
@@ -113,7 +113,7 @@ class TestProgCustomSeparators:
 
     def test_custom_separator(self):
         """Test program with custom separator."""
-        progtext = "_ a | 0 ; R ; 1 ; L ;"
+        progtext = "_ a ; 0 ; ,R, ; ,L,"
         prog = Prog(progtext, sep=";")
         assert prog.alphabet == ["_", "a"]
 
