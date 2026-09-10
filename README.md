@@ -1,5 +1,8 @@
 # Turing Machine Emulator
 
+[![Tests](https://github.com/frbrgeorge/turing_machine/actions/workflows/test.yml/badge.svg)](https://github.com/frbrgeorge/turing_machine/actions/workflows/test.yml)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/frbrgeorge/turing_machine)](https://github.com/frbrgeorge/turing_machine/releases)
+
 A simple, pure Python command-line Turing Machine tabular interpreter. This project implements a Turing machine that can execute programs defined in tabular format.
 
 ## Features
