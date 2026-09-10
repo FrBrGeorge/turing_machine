@@ -36,7 +36,8 @@ class Tape:
             self.content = self.content[:self.current] + value + self.content[self.current + 1:]
         elif self.current < 0:
             if value != self.null:
-                self.content = value + (self.current + 1) * self.null + self.content
+                self.content = value + (-self.current - 1) * self.null + self.content
+                self.current = 0
         elif value != self.null:
             self.content += (self.current - len(self)) * self.null + value
         self._normalize()
@@ -61,15 +62,16 @@ class Prog(UserDict):
     initial: str = "0"
     sep: str = ","
     null: str = "_"
+    comment = "#"
 
-    def __init__(self, progtext, null="_", sep=","):
+    def __init__(self, progtext, null="_", sep=",", comment="#"):
         super().__init__()
-        self.null, self.sep = null, sep
+        self.null, self.sep, self.comment = null, sep, comment
         self.parse(progtext)
 
     def parse(self, progtext):
         # TODO AL compatibility mode
-        table = [line.strip().split() for line in progtext.split("\n") if not line.startswith("#")]
+        table = [line.strip().split() for line in progtext.split("\n") if not line.startswith(self.comment)]
         self.alphabet = table[0]
         if any(len(a) != 1 for a in self.alphabet):
             raise ValueError(f"Incorrect symbol length in {table[0]}")
@@ -87,7 +89,7 @@ class Prog(UserDict):
 
     def __str__(self):
         # TODO mark current state / symbol
-        sw = max(len(str(s)) for s in self.states)
+        sw = max(len(str(s)) for s in self.states) if self.states else 1
         rw = sw + 2 * len(self.sep) + 2 + sw
         result = " " * (sw + 1) + " ".join(f"{a:^{rw}}" for a in self.alphabet)
         for state in self.states:

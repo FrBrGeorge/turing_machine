@@ -9,7 +9,7 @@ class TestTapeBasics:
     def test_empty_tape(self):
         """Test creating an empty tape."""
         tape = Tape()
-        assert str(tape) == ""
+        assert str(tape.content) == ""
         assert ~tape == "_"
         assert tape.current == 0
 
@@ -90,10 +90,12 @@ class TestTapeWriting:
     def test_write_null_in_bounds(self):
         """Test writing null character in bounds normalizes tape."""
         tape = Tape("abc")
-        tape.current = 1
+        +tape
+        +tape
         tape @= "_"
         # Content is normalized after writing
         assert "_" not in tape.content
+        assert len(tape) == 2
 
     def test_write_beyond_right(self):
         """Test writing beyond right boundary extends tape."""
@@ -105,9 +107,11 @@ class TestTapeWriting:
     def test_write_beyond_left(self):
         """Test writing beyond left boundary extends tape."""
         tape = Tape("abc")
-        tape.current = -2
+        -tape
+        -tape
+        -tape
         tape @= "z"
-        assert tape[-2] == "z"
+        assert ~tape == "z"
 
 
 class TestTapeNormalization:

@@ -1,6 +1,6 @@
 """Unit tests for Machine class."""
 import pytest
-from turing_machine import Machine, Tape
+from turing_machine import Machine
 
 
 class TestMachineInitialization:
@@ -37,7 +37,7 @@ class TestMachineExecution:
 
     def test_simple_execution(self):
         """Test simple machine execution."""
-        progtext = "_ a\n0 ,R,! ,L,!"
+        progtext = "_ a\n0 ,R,! ,L,"
         machine = Machine(progtext, tape="a")
         states = []
         for state, symbol in machine:
@@ -56,7 +56,7 @@ class TestMachineExecution:
 
     def test_tape_modification(self):
         """Test that tape is modified during execution."""
-        progtext = "_ a\n0 b,R,! ,L,!"
+        progtext = "_ a\n0 b,R,! ,L,"
         machine = Machine(progtext, tape="a")
         for _ in machine:
             pass
@@ -121,7 +121,7 @@ class TestMachineValidation:
 
     def test_machine_bool_valid_output(self):
         """Test machine validation with valid output."""
-        progtext = "_ a\n0 b,R,! ,L,!"
+        progtext = "_ a\n0 b,R,! ,L,"
         machine = Machine(progtext, tape="a")
         for _ in machine:
             pass
@@ -129,10 +129,11 @@ class TestMachineValidation:
 
     def test_machine_bool_null_in_output(self):
         """Test machine validation fails with null in output."""
-        progtext = "_ a\n0 _,R,! ,L,!"
-        machine = Machine(progtext, tape="a")
-        for _ in machine:
-            pass
+        progtext = " a b _\n0 ,R, _,R, ,L,!"
+        machine = Machine(progtext, tape="aba")
+        with pytest.raises(SyntaxError, match="Incorrect final word"):
+            for _ in machine:
+                pass
         assert bool(machine) is False
 
     def test_execution_limit_exceeded(self):
@@ -146,7 +147,7 @@ class TestMachineValidation:
 
     def test_invalid_move_direction(self):
         """Test error on invalid move direction."""
-        progtext = "_ a\n0 ,X,! ,L,!"
+        progtext = "_ a\n0 ,X,! ,L,"
         machine = Machine(progtext, tape="a")
         with pytest.raises(RuntimeError, match="Incorrect rule"):
             for _ in machine:
@@ -166,7 +167,7 @@ class TestMachineIteration:
 
     def test_iteration_yields_state_symbol(self):
         """Test that iteration yields (state, symbol) tuples."""
-        progtext = "_ a\n0 ,R,! ,L,!"
+        progtext = "_ a\n0 ,R,! ,L,"
         machine = Machine(progtext, tape="a")
         for state, symbol in machine:
             assert isinstance(state, str)
@@ -183,12 +184,12 @@ class TestMachineIteration:
 
     def test_state_progression(self):
         """Test state changes during execution."""
-        progtext = "_ a\n0 ,R,1 ,R,!\n1 ,R,2 ,R,!\n2 ,R,! ,L,!"
+        progtext = """a _
+        0 ,R,1 ,L,1
+        1 ,R,2 ,L,2
+        2 ,R,2 ,L,!"""
         machine = Machine(progtext, tape="aaa")
         states_seen = set()
         for state, symbol in machine:
             states_seen.add(state)
-        assert "0" in states_seen
-        assert "1" in states_seen
-        assert "2" in states_seen
-        assert "!" in states_seen
+        assert states_seen == {"1", "2", "!", "0"}

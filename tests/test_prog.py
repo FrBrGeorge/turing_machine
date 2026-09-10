@@ -1,5 +1,6 @@
 """Unit tests for Prog class."""
 import pytest
+from inspect import cleandoc
 from turing_machine import Prog
 
 
@@ -8,8 +9,7 @@ class TestProgParsing:
 
     def test_parse_simple_prog(self):
         """Test parsing a simple program."""
-        progtext = """
-        _ 0 1
+        progtext = """_ 0 1
         0 ,L,1 ,R, ,R,
         1 1,R,! 1,N,! 0,L,
         """
@@ -20,13 +20,12 @@ class TestProgParsing:
 
     def test_parse_with_comments(self):
         """Test parsing with comments."""
-        progtext = """
-        # This is a comment
+        progtext = cleandoc("""# This is a comment
         _ a b
         # Another comment
         0 ,R, ,L, ,,
         1 a,N,! ,, ,,
-        """
+        """)
         prog = Prog(progtext)
         assert prog.alphabet == ["_", "a", "b"]
         assert len(prog.states) == 2
@@ -113,12 +112,12 @@ class TestProgCustomSeparators:
 
     def test_custom_separator(self):
         """Test program with custom separator."""
-        progtext = "_ a ; 0 ; ,R, ; ,L,"
+        progtext = "_ a\n0 ;R; ;L;"
         prog = Prog(progtext, sep=";")
         assert prog.alphabet == ["_", "a"]
 
     def test_custom_null(self):
         """Test program with custom null character."""
-        progtext = "# a\n0 ,R, ,L,"
+        progtext = " # a\n0 ,R, ,L,"
         prog = Prog(progtext, null="#")
         assert prog.null == "#"
