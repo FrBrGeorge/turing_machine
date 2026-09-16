@@ -6,34 +6,35 @@ from . import Machine
 HELPURL = "https://cmcmsu.info/1course/alg.schema.mt.htm"
 RUNLIMIT = 32768
 
-def run(mt, debug, limit=RUNLIMIT):
+def run(mt, limit=RUNLIMIT):
     sw = max(len(str(s)) for s in mt.prog.states)
     trace = []
     for state, symbol in mt:
         info = f"{state:>{sw}}:{symbol}"
-        if args.verbose > 1:
+        if run.args.verbose > 1:
             print(f"{' ' * len(info)} {mt.tape}", file=sys.stderr)
             print(f"{info} {mt.tape.mark}", file=sys.stderr)
-        elif args.verbose > 0:
+        elif run.args.verbose > 0 or run.args.debug:
             print(mt.tape, file=sys.stderr)
             print(mt.tape.mark, file=sys.stderr)
-        if args.debug:
-            # TODO cmdline et al.
-            while cmd := input(f"{info} -> {mt.prog.get((state, symbol), "UNKNOWN")}> "):
-                match cmd:
-                    case "?":
-                        print(mt.prog)
-                    case "q":
-                        str(mt.tape)
-                    # TODO back
-        trace.append((state, mt.tape))
+        if run.args.debug:
+            match input(f"{info} -> {mt.prog.get((state, symbol), "UNKNOWN")}> "):
+                case "p":
+                    print(mt.prog)
+                case "q":
+                    return str(mt.tape)
+                case "b" if len(trace) > 1:
+                    trace.pop()
+                    mt.state, mt.tape.content, mt.tape.current = trace[-1]
+                    continue
+        trace.append((state, mt.tape.content, mt.tape.current))
         if len(trace) >= limit:
             raise RuntimeError(f"Limit of {limit} steps is reached, still running")
     return str(mt.tape)
 
-def main(prog, word, debug):
+def execute(prog, word, debug):
     try:
-        print(run(Machine(prog, word), debug))
+        print(run(Machine(prog, word)))
     except Exception as E:
         if debug:
             raise E
@@ -54,10 +55,14 @@ def parseargs(*args):
     return args
 
 
-if __name__ == "__main__":
-    args = parseargs()
-    prog = args.program.read()
-    if args.program == sys.stdin:
+def main():
+    run.args = parseargs()
+    prog = run.args.program.read()
+    if run.args.program == sys.stdin:
         sys.stdin = open("/dev/tty", "r")
-    word = args.input or input()
-    main(prog, word, args.debug)
+    word = run.args.input or input()
+    execute(prog, word, run.args.debug)
+
+
+if __name__ == "__main__":
+    main()

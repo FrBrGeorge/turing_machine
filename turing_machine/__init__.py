@@ -85,6 +85,7 @@ class Prog(UserDict):
     @property
     def states(self):
         return [key for key, seq in groupby(k for k, _ in self.keys())]
+    # TODO check for undeclared states
 
     def __str__(self):
         # TODO mark current state / symbol
