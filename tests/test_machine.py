@@ -19,12 +19,6 @@ class TestMachineInitialization:
         machine = Machine(progtext, tape="hello")
         assert machine.tape.content == "hello"
 
-    def test_machine_with_custom_limit(self):
-        """Test machine with custom execution limit."""
-        progtext = "_ a\n0 ,R, ,L,"
-        machine = Machine(progtext, limit=1000)
-        assert machine.limit == 1000
-
     def test_machine_with_custom_stop_state(self):
         """Test machine with custom stop state."""
         progtext = "_ a\n0 ,R, ,L,"
@@ -47,7 +41,9 @@ class TestMachineExecution:
 
     def test_multiple_steps(self):
         """Test execution with multiple steps."""
-        progtext = "_ a\n0 ,R,0 ,R,!\n1 ,L,! ,R,!"
+        progtext = """_ a
+        0 ,R,0 ,R,1
+        1 ,L,! ,R,1"""
         machine = Machine(progtext, tape="aa")
         steps = 0
         for state, symbol in machine:
@@ -136,15 +132,6 @@ class TestMachineValidation:
                 pass
         assert bool(machine) is False
 
-    def test_execution_limit_exceeded(self):
-        """Test that execution limit is enforced."""
-        # Infinite loop program - stays in state 0, moves right forever
-        progtext = "_ a\n0 ,R,0 ,R,0"
-        machine = Machine(progtext, tape="a", limit=10)
-        with pytest.raises(RuntimeError, match="Limit of 10 steps is reached"):
-            for _ in machine:
-                pass
-
     def test_invalid_move_direction(self):
         """Test error on invalid move direction."""
         progtext = "_ a\n0 ,X,! ,L,"
@@ -175,7 +162,9 @@ class TestMachineIteration:
 
     def test_stops_at_stop_state(self):
         """Test that iteration stops at stop state."""
-        progtext = "_ a\n0 ,R,1 ,R,!\n1 ,R,! ,L,!"
+        progtext = """_ a
+        0 ,R,1 ,R,!
+        1 ,R,! ,L,!"""
         machine = Machine(progtext, tape="aa")
         final_state = None
         for state, symbol in machine:

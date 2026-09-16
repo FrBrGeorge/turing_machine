@@ -5,8 +5,6 @@ Turing Machine, try 4.
 from collections import UserDict
 from itertools import groupby
 
-RUNLIMIT = 32768
-
 class Tape:
     """MT tape."""
 
@@ -71,6 +69,7 @@ class Prog(UserDict):
 
     def parse(self, progtext):
         # TODO AL compatibility mode
+        # TODO non-\n line separator
         table = [line.strip().split() for line in progtext.split("\n") if not line.startswith(self.comment)]
         self.alphabet = table[0]
         if any(len(a) != 1 for a in self.alphabet):
@@ -101,18 +100,15 @@ class Machine:
     prog: Prog = None
     tape: Tape = Tape()
     state: str = "0"
-    limit: int = RUNLIMIT
 
-    def __init__(self, progtext, tape=Tape(), limit=RUNLIMIT, stop="!", null="_", sep=","):
+    def __init__(self, progtext, tape=Tape(), stop="!", null="_", sep=","):
         self.tape = Tape(tape, null)
         self.prog = Prog(progtext, null, sep)
-        self.state, self.stop, self.limit = "0", stop, limit
+        self.state, self.stop = "0", stop
 
     def __iter__(self):
-        for i in range(self.limit):
+        while self.state != self.stop:
             yield self.state, ~self.tape
-            if self.state == self.stop:
-                break
             symbol, move, state = self.prog[self.state, ~self.tape]
             if move not in set("LRN"):
                 raise RuntimeError(f"Incorrect rule: {self.prog[self.state, ~self.tape]} at {self.state}:{~self.tape}")
@@ -121,10 +117,9 @@ class Machine:
             self.tape @= symbol
             (move == "L" and -self.tape) or (move == "R" and +self.tape)
             self.state = state
-        else:
-            raise RuntimeError(f"Limit of {self.limit} steps is reached, still running")
         if not self:
             raise SyntaxError(f"Incorrect final word: {self.tape}")
+        yield self.state, ~self.tape
 
     def __bool__(self):
         """If MT is correct?"""

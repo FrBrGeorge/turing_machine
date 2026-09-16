@@ -1,27 +1,14 @@
 #!/usr/bin/env python3
 import argparse
-from pathlib import Path
 import sys
 from . import Machine
 
 HELPURL = "https://cmcmsu.info/1course/alg.schema.mt.htm"
+RUNLIMIT = 32768
 
-def run(*args):
-    parser = argparse.ArgumentParser(description="Turing Machine runner",
-                                     epilog=f"See {HELPURL} for synrtax and examples")
-    parser.add_argument("program", help="Program in tabular form")
-    parser.add_argument("--debug", "-d", action="store_true", help="Step-by-step execution")
-    parser.add_argument("--verbose", "-v", default=0, action='count', help="Increase verbosity")
-    parser.add_argument("--input", "-i", help="Input word")
-    # TODO redefine limit, null, sep etc
-
-    args = parser.parse_args(args or None)
-    run.args = args
-    progtext = Path(args.program).read_text()
-    if not args.input:
-        args.input = input()
-    mt = Machine(progtext, args.input)
+def run(mt, debug, limit=RUNLIMIT):
     sw = max(len(str(s)) for s in mt.prog.states)
+    trace = []
     for state, symbol in mt:
         info = f"{state:>{sw}}:{symbol}"
         if args.verbose > 1:
@@ -36,18 +23,41 @@ def run(*args):
                 match cmd:
                     case "?":
                         print(mt.prog)
+                    case "q":
+                        str(mt.tape)
+                    # TODO back
+        trace.append((state, mt.tape))
+        if len(trace) >= limit:
+            raise RuntimeError(f"Limit of {limit} steps is reached, still running")
     return str(mt.tape)
 
-def main():
+def main(prog, word, debug):
     try:
-        print(run())
+        print(run(Machine(prog, word), debug))
     except Exception as E:
-        if run.args.debug:
+        if debug:
             raise E
         else:
             print("Error:", E, file=sys.stderr)
             exit(1)
 
+def parseargs(*args):
+    parser = argparse.ArgumentParser(description="Turing Machine runner",
+                                     epilog=f"See {HELPURL} for syntax and examples")
+    parser.add_argument("program", type=argparse.FileType("r"), help="Program in tabular form")
+    parser.add_argument("--debug", "-d", action="store_true", help="Step-by-step execution")
+    parser.add_argument("--verbose", "-v", default=0, action='count', help="Increase verbosity")
+    parser.add_argument("--input", "-i", help="Input word")
+    # TODO redefine limit, null, sep etc
+
+    args = parser.parse_args(args or None)
+    return args
+
 
 if __name__ == "__main__":
-    main()
+    args = parseargs()
+    prog = args.program.read()
+    if args.program == sys.stdin:
+        sys.stdin = open("/dev/tty", "r")
+    word = args.input or input()
+    main(prog, word, args.debug)
