@@ -2,6 +2,7 @@
 import argparse
 import sys
 from . import Machine
+from .__version__ import VERSION
 
 HELPURL = "https://cmcmsu.info/1course/alg.schema.mt.htm"
 RUNLIMIT = 32768
@@ -43,7 +44,7 @@ def execute(prog, word, debug):
             exit(1)
 
 def parseargs(*args):
-    parser = argparse.ArgumentParser(description="Turing Machine runner",
+    parser = argparse.ArgumentParser(description=f"Turing Machine runner v{VERSION}",
                                      epilog=f"See {HELPURL} for syntax and examples")
     parser.add_argument("program", type=argparse.FileType("r"), help="Program in tabular form")
     parser.add_argument("--debug", "-d", action="store_true", help="Step-by-step execution")
